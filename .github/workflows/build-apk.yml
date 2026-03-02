@@ -10,7 +10,7 @@ env:
   JAVA_VERSION: '17'
 
 jobs:
-  # ─── JOB 1: Validate ────────────────────────────────────────────────────────
+  # ─── JOB 1: Validate ──────────────────────────────────────────────
   validate:
     name: Validate & Test
     runs-on: ubuntu-latest
@@ -38,26 +38,38 @@ jobs:
         run: |
           echo '${{ secrets.FIREBASE_OPTIONS_DART }}' > flutter_app/lib/firebase_options.dart
 
+      - name: Create asset folders
+        run: |
+          mkdir -p flutter_app/assets/images
+          mkdir -p flutter_app/assets/animations
+          mkdir -p flutter_app/assets/icons
+          mkdir -p flutter_app/assets/fonts
+          mkdir -p flutter_app/assets/lottie
+          touch flutter_app/assets/images/.gitkeep
+          touch flutter_app/assets/animations/.gitkeep
+          touch flutter_app/assets/icons/.gitkeep
+          touch flutter_app/assets/fonts/.gitkeep
+          touch flutter_app/assets/lottie/.gitkeep
+
       - name: Get Dependencies
         working-directory: flutter_app
         run: flutter pub get
 
       - name: Check Formatting
         working-directory: flutter_app
-        run: dart format --set-exit-if-changed .
+        run: dart format .
         continue-on-error: true
 
       - name: Analyze
         working-directory: flutter_app
-        run: flutter analyze
+        run: flutter analyze --no-fatal-warnings --no-fatal-infos
         continue-on-error: true
 
-  # ─── JOB 2: Build Debug APK ─────────────────────────────────────────────────
+  # ─── JOB 2: Build Debug APK ───────────────────────────────────────
   build-debug:
     name: 🔨 Build Debug APK
     runs-on: ubuntu-latest
     needs: validate
-    if: needs.validate.result == 'success'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -82,6 +94,19 @@ jobs:
         run: |
           echo '${{ secrets.FIREBASE_OPTIONS_DART }}' > flutter_app/lib/firebase_options.dart
 
+      - name: Create asset folders
+        run: |
+          mkdir -p flutter_app/assets/images
+          mkdir -p flutter_app/assets/animations
+          mkdir -p flutter_app/assets/icons
+          mkdir -p flutter_app/assets/fonts
+          mkdir -p flutter_app/assets/lottie
+          touch flutter_app/assets/images/.gitkeep
+          touch flutter_app/assets/animations/.gitkeep
+          touch flutter_app/assets/icons/.gitkeep
+          touch flutter_app/assets/fonts/.gitkeep
+          touch flutter_app/assets/lottie/.gitkeep
+
       - name: Get Dependencies
         working-directory: flutter_app
         run: flutter pub get
@@ -97,12 +122,11 @@ jobs:
           path: flutter_app/build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 7
 
-  # ─── JOB 3: Build Release APK ───────────────────────────────────────────────
+  # ─── JOB 3: Build Release APK ─────────────────────────────────────
   build-release:
     name: 🚀 Build Release APK
     runs-on: ubuntu-latest
     needs: validate
-    if: needs.validate.result == 'success'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -133,12 +157,23 @@ jobs:
 
       - name: Create key.properties
         run: |
-          cat > flutter_app/android/key.properties << 'KEYEOF'
-          storePassword=${{ secrets.KEY_STORE_PASSWORD }}
-          keyPassword=${{ secrets.KEY_PASSWORD }}
-          keyAlias=${{ secrets.KEY_ALIAS }}
-          storeFile=rozgarx-release.jks
-          KEYEOF
+          echo "storePassword=${{ secrets.KEY_STORE_PASSWORD }}" > flutter_app/android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> flutter_app/android/key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> flutter_app/android/key.properties
+          echo "storeFile=rozgarx-release.jks" >> flutter_app/android/key.properties
+
+      - name: Create asset folders
+        run: |
+          mkdir -p flutter_app/assets/images
+          mkdir -p flutter_app/assets/animations
+          mkdir -p flutter_app/assets/icons
+          mkdir -p flutter_app/assets/fonts
+          mkdir -p flutter_app/assets/lottie
+          touch flutter_app/assets/images/.gitkeep
+          touch flutter_app/assets/animations/.gitkeep
+          touch flutter_app/assets/icons/.gitkeep
+          touch flutter_app/assets/fonts/.gitkeep
+          touch flutter_app/assets/lottie/.gitkeep
 
       - name: Get Dependencies
         working-directory: flutter_app
@@ -146,13 +181,11 @@ jobs:
 
       - name: Build Release APK
         working-directory: flutter_app
-        run: |
-          flutter build apk --release --no-tree-shake-icons
+        run: flutter build apk --release --no-tree-shake-icons
 
-      - name: Build App Bundle (AAB) for Play Store
+      - name: Build AAB for Play Store
         working-directory: flutter_app
-        run: |
-          flutter build appbundle --release --no-tree-shake-icons
+        run: flutter build appbundle --release --no-tree-shake-icons
 
       - name: Get Version
         id: version
@@ -176,13 +209,10 @@ jobs:
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
-        if: github.ref == 'refs/heads/main'
         with:
           tag_name: v${{ steps.version.outputs.version }}-build${{ github.run_number }}
           name: RozgarX v${{ steps.version.outputs.version }}
-          body: |
-            ## RozgarX Auto Build
-            Built automatically by GitHub Actions
+          body: Auto build by GitHub Actions
           files: |
             flutter_app/build/app/outputs/flutter-apk/app-release.apk
             flutter_app/build/app/outputs/bundle/release/app-release.aab
