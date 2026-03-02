@@ -77,11 +77,6 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX"/>
 
-        <!-- Flutter Deferred Components -->
-        <meta-data
-            android:name="io.flutter.embedding.android.SplashScreenDrawable"
-            android:resource="@drawable/launch_background"/>
-
         <!-- WorkManager for background jobs -->
         <provider
             android:name="androidx.startup.InitializationProvider"
