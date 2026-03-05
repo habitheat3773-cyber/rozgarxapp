@@ -32,16 +32,10 @@ jobs:
             '${{ secrets.KEY_ALIAS }}' \
             > flutter_app/android/key.properties
           mkdir -p flutter_app/assets/{images,icons,fonts,animations}
-
-      - name: Remove v1 embedding references
-        run: |
-          find flutter_app/android -type f | xargs grep -rl "io\.flutter\.app" 2>/dev/null | while read f; do
-            sed -i '/io\.flutter\.app/d' "$f"
-          done
-          find flutter_app/android -type f | xargs grep -rl "SplashScreenDrawable\|FlutterApplication\|registerWith\|PluginRegistry" 2>/dev/null | while read f; do
-            sed -i '/SplashScreenDrawable\|FlutterApplication\|registerWith\|PluginRegistry/d' "$f"
-          done
-          echo "V1 embedding references cleaned from all android files"
+          printf 'flutter.sdk=%s\nsdk.dir=%s\n' \
+            "$(which flutter | xargs dirname | xargs dirname)" \
+            "$ANDROID_SDK_ROOT" \
+            > flutter_app/android/local.properties
 
       - name: Get packages
         working-directory: flutter_app
